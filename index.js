@@ -40,8 +40,8 @@ app.get('/Recipes/:id', (req, res) => {
 
 // เพิ่มข้อมูลใน Recipes
 app.post('/Recipes', (req, res) => {
-    connection.query('INSERT INTO Recipes (name, description, category, instructions) VALUES (?, ?, ?, ?)', 
-        [req.body.name, req.body.description, req.body.category, req.body.instructions], 
+    connection.query('INSERT INTO Recipes (name, description, category, instructions, picture1) VALUES (?, ?, ?, ?, ?)', 
+        [req.body.name, req.body.description, req.body.category, req.body.instructions, req.body.picture1], 
         function (err, results) {
             if (err) {
                 console.error('Error in POST /Recipes:', err);
@@ -56,8 +56,8 @@ app.post('/Recipes', (req, res) => {
 // อัปเดตข้อมูลใน Recipes ตาม id
 app.put('/Recipes/:id', (req, res) => {
     const id = req.params.id;
-    connection.query('UPDATE Recipes SET name=?, description=?, category=?, instructions=? WHERE id=?', 
-        [req.body.name, req.body.description, req.body.category, req.body.instructions, id], 
+    connection.query('UPDATE Recipes SET name=?, description=?, category=?, instructions=?, picture1=? WHERE id=?', 
+        [req.body.name, req.body.description, req.body.category, req.body.instructions, req.body.picture1, id], 
         function (err, results) {
             if (err) {
                 console.error(`Error in PUT /Recipes/${id}:`, err);
