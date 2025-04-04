@@ -147,25 +147,26 @@ app.delete('/Ingredients/:id', async (req, res) => {
         res.status(500).json({ error: 'Error deleting Ingredient' });
     }
 });
-
-// ดึงข้อมูลทั้งหมดจาก Recipe_Ingredients
-app.get('/Recipe_Ingredients', async (req, res) => {
-    try {
-        const [results] = await pool.execute('SELECT * FROM Recipe_Ingredients');
-        res.json(results);
-    } catch (err) {
-        console.error('Error in GET /Recipe_Ingredients:', err);
-        res.status(500).json({ error: 'Error retrieving Recipe Ingredients' });
-    }
-});
-
-// ดึงข้อมูลจาก Recipe_Ingredients ตาม recipe_id
+// ดึงข้อมูลจาก Recipe_Ingredients พร้อมชื่อวัตถุดิบและหน่วย
 app.get('/Recipe_Ingredients/:recipe_id', async (req, res) => {
     const recipe_id = parseInt(req.params.recipe_id);
     if (isNaN(recipe_id)) return res.status(400).json({ error: 'Invalid recipe_id' });
 
     try {
-        const [results] = await pool.execute('SELECT * FROM Recipe_Ingredients WHERE recipe_id = ?', [recipe_id]);
+        const [results] = await pool.execute(`
+            SELECT 
+                ri.recipe_id,
+                ri.ingredient_id,
+                i.name AS ingredient_name,
+                ri.quantity,
+                i.unit
+            FROM 
+                Recipe_Ingredients ri
+            JOIN 
+                Ingredients i ON ri.ingredient_id = i.id
+            WHERE 
+                ri.recipe_id = ?`, [recipe_id]);
+        
         if (results.length === 0) return res.status(404).json({ error: 'No ingredients found for this recipe' });
 
         res.json(results);
@@ -241,6 +242,7 @@ app.delete('/Recipe_Ingredients', async (req, res) => {
         res.status(500).json({ error: 'Error deleting Recipe Ingredient' });
     }
 });
+
 
 // Start server
 const PORT = process.env.PORT || 3000;
