@@ -148,6 +148,100 @@ app.delete('/Ingredients/:id', async (req, res) => {
     }
 });
 
+// ดึงข้อมูลทั้งหมดจาก Recipe_Ingredients
+app.get('/Recipe_Ingredients', async (req, res) => {
+    try {
+        const [results] = await pool.execute('SELECT * FROM Recipe_Ingredients');
+        res.json(results);
+    } catch (err) {
+        console.error('Error in GET /Recipe_Ingredients:', err);
+        res.status(500).json({ error: 'Error retrieving Recipe Ingredients' });
+    }
+});
+
+// ดึงข้อมูลจาก Recipe_Ingredients ตาม recipe_id
+app.get('/Recipe_Ingredients/:recipe_id', async (req, res) => {
+    const recipe_id = parseInt(req.params.recipe_id);
+    if (isNaN(recipe_id)) return res.status(400).json({ error: 'Invalid recipe_id' });
+
+    try {
+        const [results] = await pool.execute('SELECT * FROM Recipe_Ingredients WHERE recipe_id = ?', [recipe_id]);
+        if (results.length === 0) return res.status(404).json({ error: 'No ingredients found for this recipe' });
+
+        res.json(results);
+    } catch (err) {
+        console.error(`Error in GET /Recipe_Ingredients/${recipe_id}:`, err);
+        res.status(500).json({ error: 'Error retrieving Recipe Ingredients' });
+    }
+});
+
+// เพิ่มข้อมูลใน Recipe_Ingredients
+app.post('/Recipe_Ingredients', async (req, res) => {
+    const { recipe_id, ingredient_id, quantity } = req.body;
+
+    // ตรวจสอบว่า recipe_id, ingredient_id และ quantity มีหรือไม่
+    if (!recipe_id || !ingredient_id || !quantity) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const [results] = await pool.execute(
+            'INSERT INTO Recipe_Ingredients (recipe_id, ingredient_id, quantity) VALUES (?, ?, ?)',
+            [recipe_id, ingredient_id, quantity]
+        );
+        res.status(201).json({ id: results.insertId, message: 'Recipe Ingredient added successfully' });
+    } catch (err) {
+        console.error('Error in POST /Recipe_Ingredients:', err);
+        res.status(500).json({ error: 'Error adding Recipe Ingredient' });
+    }
+});
+
+// อัปเดตข้อมูลใน Recipe_Ingredients ตาม recipe_id และ ingredient_id
+app.put('/Recipe_Ingredients', async (req, res) => {
+    const { recipe_id, ingredient_id, quantity } = req.body;
+
+    // ตรวจสอบว่ามีข้อมูลครบหรือไม่
+    if (!recipe_id || !ingredient_id || !quantity) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const [results] = await pool.execute(
+            'UPDATE Recipe_Ingredients SET quantity=? WHERE recipe_id=? AND ingredient_id=?',
+            [quantity, recipe_id, ingredient_id]
+        );
+        if (results.affectedRows === 0) return res.status(404).json({ error: 'Recipe Ingredient not found' });
+
+        res.json({ message: 'Recipe Ingredient updated successfully' });
+    } catch (err) {
+        console.error('Error in PUT /Recipe_Ingredients:', err);
+        res.status(500).json({ error: 'Error updating Recipe Ingredient' });
+    }
+});
+
+// ลบข้อมูลจาก Recipe_Ingredients ตาม recipe_id และ ingredient_id
+app.delete('/Recipe_Ingredients', async (req, res) => {
+    const { recipe_id, ingredient_id } = req.body;
+
+    // ตรวจสอบว่า recipe_id และ ingredient_id มีหรือไม่
+    if (!recipe_id || !ingredient_id) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const [results] = await pool.execute(
+            'DELETE FROM Recipe_Ingredients WHERE recipe_id=? AND ingredient_id=?',
+            [recipe_id, ingredient_id]
+        );
+        if (results.affectedRows === 0) return res.status(404).json({ error: 'Recipe Ingredient not found' });
+
+        res.json({ message: 'Recipe Ingredient deleted successfully' });
+    } catch (err) {
+        console.error('Error in DELETE /Recipe_Ingredients:', err);
+        res.status(500).json({ error: 'Error deleting Recipe Ingredient' });
+    }
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
